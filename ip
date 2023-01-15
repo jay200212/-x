@@ -1,4 +1,12 @@
 
+# ======= 抖音 ======= #
+# 需要家宽IP才可生效
+DOMAIN-KEYWORD,core-c-lq
+DOMAIN-KEYWORD,core-lq
+DOMAIN-KEYWORD,normal-c-lq
+DOMAIN-KEYWORD,normal-lq
+DOMAIN-KEYWORD,search-quic-lq
+DOMAIN-KEYWORD,search-lq
 
 # ======= 微博 ======= #
 DOMAIN,api.weibo.cn
