@@ -1,0 +1,21 @@
+#!name=VIP
+#!desc=软件破解
+
+[Script]
+# >Pillow
+Pillow_12 = type=http-response, pattern=^https?:\/\/api\.revenuecat\.com\/v1\/(receipts|subscribers\/\$RCAnonymousID%3A\w{32})$, requires-body=true, max-size=3145728, script-path=https://raw.githubusercontent.com/89996462/Quantumult-X/main/ycdz/Pillow.js, timeout=60, script-update-interval=0
+# >ProCCD
+proccd_13 = type=http-response, pattern=^https:\/\/buy\.itunes\.apple\.com\/verifyReceipt, requires-body=true, max-size=3145728, script-path=https://raw.githubusercontent.com/89996462/Quantumult-X/main/ycdz/proccd.js, timeout=60, script-update-interval=0
+
+# > Grow解锁永久会员
+GrowForeverVipCrack_12 = type=http-response, pattern=^https?:\/\/api\.revenuecat\.com\/v1\/(receipts|subscribers\/\$RCAnonymousID%3A\w{32})$, requires-body=true, max-size=3145728, script-path=https://raw.githubusercontent.com/yqc007/QuantumultX/master/GrowForeverVipCrack.js, timeout=60, script-update-interval=0
+# >NotBoring解锁会员
+NotBoring_14 = type=http-response, pattern=https://api.revenuecat.com/v1/(receipts|subscribers)/*, requires-body=true, max-size=3145728, script-path=https://raw.githubusercontent.com/89996462/Quantumult-X/main/ycdz/NotBoring.js, timeout=60, script-update-interval=0
+# >Picsew解锁会员
+Picsew_11 = type=http-response, pattern=^https:\/\/buy\.itunes\.apple\.com\/verifyReceipt, requires-body=true, max-size=3145728, script-path=https://raw.githubusercontent.com/89996462/Quantumult-X/main/ycdz/Picsew.js, timeout=60, script-update-interval=0
+
+
+
+[MITM]
+
+hostname = %APPEND% *.amap.com,  %APPEND% api.revenuecat.com, %APPEND% buy.itunes.apple.com
