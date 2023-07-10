@@ -153,7 +153,7 @@ proxy-groups:
     icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/United_States.png
     use:
       - All
-    filter: 美|洛杉矶|🇺🇸|US|(?i)States|American
+    filter: 🇺🇲
     
       - name: 🇸🇬 SG
     type: select
