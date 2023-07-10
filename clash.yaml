@@ -1,263 +1,121 @@
-mixed-port: 7890
-allow-lan: true
-bind-address: '*'
-mode: rule
-log-level: info
-ipv6: true
+port: 7890           # HTTP 代理端口
+socks-port: 7891     # Socks 端口
+redir-port: 7892     # Redir 端口
+mixed-port: 7893     # 混合端口
+allow-lan: true      # 允许局域网连接
+bind-address: "*"    # 地址绑定
+mode: rule           # 规则模式
+log-level: info      # 日志级别
+ipv6: false          # IPV6开关
 external-controller: 127.0.0.1:9090
-# 按照文字提示替换下面的“订阅链接”即可
-proxy-providers:
-  All:
-    type: http
-    url: "https://gist.githubusercontent.com/jay200212/bbb84017fc8bcc61da02799c891bb955/raw/clash"
-  
-    interval: 86400
-    path: ./all.yaml
-    health-check:
-      enable: true
-      interval: 600
-      url: http://www.gstatic.com/generate_204
-      
+
 dns:
-  enable: true
-  ipv6: true
-  listen: 0.0.0.0:53
-  default-nameserver:
-    - 119.29.29.29
-    - 223.5.5.5
+  enable: true       # 不使用系统 DNS
+  ipv6: false        # 关闭 IPV6
+  listen: 0.0.0.0:53 # dns 监听
   enhanced-mode: fake-ip
   fake-ip-range: 198.18.0.1/16
   fake-ip-filter:
-    - '*.lan'
+    - "*.lan"
     - localhost.ptlogin2.qq.com
-    - '+.srv.nintendo.net'
-    - '+.stun.playstation.net'
-    - '+.msftconnecttest.com'
-    - '+.msftncsi.com'
-    - '+.xboxlive.com'
-    - 'msftconnecttest.com'
-    - 'xbox.*.microsoft.com'
-    - '*.battlenet.com.cn'
-    - '*.battlenet.com'
-    - '*.blzstatic.cn'
-    - '*.battle.net'
-  nameserver:
-    - https://doh.pub/dns-query
+    - +.srv.nintendo.net
+    - +.stun.playstation.net
+    - +.msftconnecttest.com
+    - +.msftncsi.com
+    - +.xboxlive.com
+    - msftconnecttest.com
+    - xbox.*.microsoft.com
+    - "*.battlenet.com.cn"
+    - "*.battlenet.com"
+    - "*.blzstatic.cn"
+    - "*.battle.net"
+  nameserver:        # 默认 DNS 服务
+    - 223.5.5.5
+    - 119.29.29.29
+  fallback:          # 国外 DNS 服务器
+    - https://cloudflare-dns.com/dns-query
+    - https://dns.google/dns-query
     - https://dns.alidns.com/dns-query
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    ipcidr:
+      - 240.0.0.0/4
+#========= 建立锚点 =========#
 
-proxies:
-            
+# 策略组引用
+pr:   &a3 {type: select,   proxies: [♻️ 自动选择, 🚀 手动切换, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇺🇲 美国节点, 🇨🇳 台湾节点, 🇸🇬 狮城节点, DIRECT] }
+p:    &a1 {type: http,     interval: 86400,  health-check: {enable: true, url: http://www.gstatic.com/generate_204, interval: 1800} }
+auto: &a4 {type: url-test, lazy: true,  url: http://www.gstatic.com/generate_204, interval: 900, use: [Subscribe] }
+use:  &a2 {type: select,   use: [Subscribe] }
+c:    &a6 {type: http,     behavior: classical, interval: 86400}
+d:    &a5 {type: http,     behavior: domain,    interval: 86400}
+i:    &a7 {type: http,     behavior: ipcidr,    interval: 86400}
+
+proxy-providers:
+  Subscribe:
+    <<: *a1
+    url: https://gist.githubusercontent.com/jay200212/bbb84017fc8bcc61da02799c891bb955/raw/clash
+    path: ./proxy_providers/tmp.yaml
+    # URL后面填写格式1: 直接填写你的机场Clash订阅[单一订阅][推荐此种方式，避免订阅泄露]
+    # URL后面填写格式2：https://sub.xeton.dev/sub?target=clash&url=请手动填入你的订阅[多机场订阅用|分割即可]&list=true&udp=false  
+
+proxies: null
 proxy-groups:
-  - name: 🚀 手动切换
-    type: select
-    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Rocket.png
-    use:
-      - All
-    proxies:
-      - ♻️ 自动选择
+#分流分组
+  - {name: 🚀 手动切换, <<: *a2}
+  - {name: 🌏 全球加速, <<: *a3}
+  - {name: 🍎 苹果服务, <<: *a3}
 
-  - name: ♻️ 自动选择
-    type: url-test
-    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Auto.png
-    use: 
-       - All
-    url: "http://www.gstatic.com/generate_204"
-    interval: 300
-       
-  - name: 🌏 Globe
-    type: select
-    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Global.png
-    proxies: &G
-      - 🚀 手动切换
-      - ♻️ 自动选择
-      - 🇭🇰 HK
-      - 🇯🇵 JP
-      - 🇺🇲 US
-      - 🇨🇳 TW
-      - 🇸🇬 SG
+  - {name: 🤖 OpenAi,   type: select, proxies: [🇺🇲 美国节点]}
+  - {name: 🎬 国际媒体, <<: *a3}
+  - {name: 🌌 谷歌服务, <<: *a3}
+  - {name: 📟 电报消息, <<: *a3}
 
-  - name: 🌌 谷歌服务
-    type: select
-    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Google.png
-    proxies: &A
-      - DIRECT
-      - 🚀 手动切换
-      - ♻️ 自动选择
-      - 🇭🇰 HK
-      - 🇯🇵 JP
-      - 🇺🇲 US
-      - 🇨🇳 TW
-      - 🇸🇬 SG
+  - {name: 🎮 游戏平台, <<: *a3}
+  - {name: 🆎 AdBlock, type: select, proxies: [REJECT]}
+  - {name: 🐟 兜底分流, <<: *a3}
+  
+#节点分组
+  - {name: ♻️ 自动选择, <<: *a4}
+  - {name: 🇭🇰 香港节点, <<: *a4, filter: "港|HK|(?i)Hong"           }             # a4更改为a2，即为手动选择
+  - {name: 🇯🇵 日本节点, <<:  *a4, filter: "日|东京|JP|(?i)Japan"     }             # a4更改为a2，即为手动选择     
+  - {name: 🇨🇳 台湾节点, <<: *a4, filter: "台|湾|TW|(?i)Taiwan"      }             # a4更改为a2，即为手动选择
+  - {name: 🇺🇲 美国节点, <<: *a4, filter: "美|US|(?i)States|American"}             # a4更改为a2，即为手动选择
+  - {name: 🇸🇬 狮城节点, <<: *a4, filter: "新|坡|SG|(?i)Singapore"    }            # a4更改为a2，即为手动选择
 
-  - name: 📺 Microsoft
-    type: select
-    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Microsoft.png
-    proxies: &A
-      - DIRECT
-      - 🚀 手动切换
-      - ♻️ 自动选择
-      - 🇭🇰 HK
-      - 🇯🇵 JP
-      - 🇺🇲 US
-      - 🇨🇳 TW
-      - 🇸🇬 SG
-      
-  - name: 📟 Telegram
-    type: select
-    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Telegram.png
-    proxies: &A
-      - DIRECT
-      - 🚀 手动切换
-      - ♻️ 自动选择
-      - 🇭🇰 HK
-      - 🇯🇵 JP
-      - 🇺🇲 US
-      - 🇨🇳 TW
-      - 🇸🇬 SG
-      
-  - name: 🎮 Game
-    type: select
-    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Game.png
-    proxies:
-      *A
-      
-  - name: 🐟 兜底分流
-    type: select
-    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Final.png
-    proxies:
-      *A
-
-  - name: 🇭🇰 HK
-    type: select
-    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Hong_Kong.png
-    use:
-      - All
-    filter: 港|🇭🇰|HK|(?i)Hong
-      
-  - name: 🇯🇵 JP
-    type: select
-    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Japan.png
-    use:
-      - All
-    filter: 日|东京|🇯🇵|JP|(?i)Japan
-     
-  - name: 🇨🇳 TW
-    type: select
-    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Taiwan.png
-    use:
-      - All
-    filter: 台|🇨🇳|🇹🇼|TW|(?i)Taiwan
-
-  - name: 🇺🇲 US
-    type: select
-    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/United_States.png
-    use:
-      - All
-    filter: 🇺🇲
-    
-      - name: 🇸🇬 SG
-    type: select
-    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/United_States.png
-    use:
-      - All
-    filter: 新|坡|SG|(?i)Singapore
-    
+# 分流规则 
 rule-providers:
-        
-  AD:
-    type: http
-    behavior: classical
-    format: text
-    url: "https://anti-ad.net/clash.yaml"
-    path: ./ruleset/YouTube.yaml
-    interval: 86400      
-        
-  YouTube:
-    type: http
-    behavior: classical
-    format: text
-    url: "https://ghproxy.com/https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/YouTube/YouTube.list"
-    path: ./ruleset/YouTube.yaml
-    interval: 86400
-
-  Github:
-    type: http
-    behavior: classical
-    format: text
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/GitHub/GitHub.yaml"
-    path: ./ruleset/Github.yaml
-    interval: 86400
-
-  Google:
-    type: http
-    behavior: classical
-    format: text
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Google/Google.yaml"
-    path: ./ruleset/Google.yaml
-    interval: 86400
-    
-  Telegram:
-    type: http
-    behavior: classical
-    format: text
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Telegram/Telegram.yaml"
-    path: ./ruleset/Telegram.yaml
-    interval: 86400
-
-
-  Microsoft:
-    type: http
-    behavior: classical
-    format: text
-    url: "https://ghproxy.com/https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Microsoft/Microsoft.list"
-    path: ./ruleset/Microsoft.yaml
-    interval: 86400
-
-
-  Game:
-    type: http
-    behavior: classical
-    format: text
-    url: "https://ghproxy.com/https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Game/Game.list"
-    path: ./ruleset/Game.yaml
-    interval: 86400
-
-  OtherProxy:
-    type: http
-    behavior: classical
-    format: text
-    url: "https://ghproxy.com/https://raw.githubusercontent.com/Infatuation-Fei/rule/main/Clash/Rule/OtherProxy.txt"
-    path: ./ruleset/OtherProxy.yaml
-    interval: 86400
-
-  China:
-    type: http
-    behavior: domain
-    format: text
-    url: "https://ghproxy.com/https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/China/China_Domain.txt"
-    path: ./ruleset/China.yaml
-    interval: 86400
-
-  Global:
-    type: http
-    behavior: domain
-    format: text
-    url: "https://ghproxy.com/https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Proxy/Proxy_Domain.txt"
-    path: ./ruleset/Global-Domain.yaml
-    interval: 86400
-    
+  Direct:      {<<: *a5, url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Direct/Direct.yaml,                      path: ./ruleset/Direct.yaml       }
+  Lan:         {<<: *a6, url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Lan/Lan.yaml,                            path: ./ruleset/Lan.yaml          }
+  Download:    {<<: *a6, url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Download/Download.yaml,                  path: ./ruleset/Download.yaml     }
+  Ad:          {<<: *a5, url: https://anti-ad.net/clash.yaml,                                                                                     path: ./ruleset/anti-ad-clash.yaml}
+  OpenAi:      {<<: *a6, url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/OpenAI/OpenAI.yaml,                      path: ./ruleset/OpenAi.yaml       }
+  GlobalMedia: {<<: *a6, url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/GlobalMedia/GlobalMedia_Classical.yaml,  path: ./ruleset/GlobalMedia.yaml  }
+  Apple:       {<<: *a6, url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Apple/Apple_Classical.yaml,              path: ./ruleset/Apple.yaml        }
+  Github:      {<<: *a6, url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/GitHub/GitHub.yaml,                      path: ./ruleset/Github.yaml       }
+  Microsoft:   {<<: *a6, url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Microsoft/Microsoft.yaml,                path: ./ruleset/Microsoft.yaml    }
+  Google:      {<<: *a6, url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Google/Google.yaml,                      path: ./ruleset/Google.yaml       }
+  Telegram:    {<<: *a6, url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Telegram/Telegram.yaml,                  path: ./ruleset/Telegram.yaml     }
+  Game:        {<<: *a6, url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Game/Game.yaml,                          path: ./ruleset/Game.yaml         }
+  ChinaIP:     {<<: *a7, url: https://cdn.jsdelivr.net/gh/soffchen/GeoIP2-CN@release/clash-rule-provider.yml,                                     path: ./ruleset/ChinaIP.yaml      }
+  ProxyLite:   {<<: *a6, url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ProxyLite/ProxyLite.yaml,                path: ./ruleset/ProxyLite.yaml    }
+  
+ # 分流Policy 
 rules:
-  - RULE-SET,YouTube,YouTube,no-resolve
-
-  - RULE-SET,Ad,REJECT
-  - RULE-SET,Microsoft,📺 Microsoft
-  - RULE-SET,Google,🌌 Google
-  - RULE-SET,Telegram,📟 Telegram
-  - RULE-SET,Game,🎮 Game
-  - RULE-SET,Github,🌏 Globe
-  - RULE-SET,OtherProxy,🌏 Globe
-  - RULE-SET,Global,🌏 Globe
-  - RULE-SET,China,DIRECT
-  - GEOIP,Lan,DIRECT
+  - RULE-SET,Direct,DIRECT
+  - RULE-SET,Lan,DIRECT
+  - RULE-SET,Download,DIRECT
+  - RULE-SET,Ad,🆎 AdBlock
+  - RULE-SET,OpenAi,🤖 OpenAi
+  - RULE-SET,GlobalMedia,🎬 国际媒体
+  - RULE-SET,Apple,🍎 苹果服务
+  - RULE-SET,Github,🌏 全球加速
+  - RULE-SET,Microsoft, 🌏 全球加速
+  - RULE-SET,Google,🌌 谷歌服务
+  - RULE-SET,Telegram,📟 电报消息
+  - RULE-SET,Game,🎮 游戏平台
+  - RULE-SET,ProxyLite,🌏 全球加速
+  - RULE-SET,ChinaIP,DIRECT
   - GEOIP,CN,DIRECT
   - MATCH,🐟 兜底分流
